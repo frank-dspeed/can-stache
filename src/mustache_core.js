@@ -206,7 +206,9 @@ var core = {
 					}
 				}
 				// Look up partials in options first.
-				var partial = options.peek("partials." + localPartialName), renderer;
+				var partial = options.peek("partials." + localPartialName);
+				partial = partial || ( options.inlinePartials && options.inlinePartials[ localPartialName ] );
+				var renderer;
 				if (partial) {
 					renderer = function() {
 						return partial.render ? partial.render(scope, options, nodeList)
@@ -408,7 +410,7 @@ var core = {
 		expression = expression.trim();
 		var mode = expression.charAt(0);
 
-		if( "#/{&^>!".indexOf(mode) >= 0 ) {
+		if( "#/{&^>!<".indexOf(mode) >= 0 ) {
 			expression =  expression.substr(1).trim();
 		} else {
 			mode = null;
