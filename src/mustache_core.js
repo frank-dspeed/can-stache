@@ -317,7 +317,6 @@ var core = {
 			// Regsiter it with its parent ONLY if this is directly nested.  Otherwise, it's unencessary.
 			nodeLists.register(nodeList, null, parentSectionNodeList || true, state.directlyNested);
 
-
 			// Get the evaluator. This does not need to be cached (probably) because if there
 			// an observable value, it will be handled by `can.view.live`.
 			var evaluator = makeEvaluator( scope, options, nodeList, mode, exprData, truthyRenderer, falseyRenderer,

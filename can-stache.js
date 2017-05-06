@@ -35,46 +35,12 @@ var namespaces = {
 },
 	textContentOnlyTag = {style: true, script: true};
 
-var intermediateNamedPartials = function ( intermediate ) {
-	var i, cur, val, partialName, partialClose, spliceStart, subIntermediate;
-	var inlinePartials = {};
-	for ( i = 0; i < intermediate.length; i++ ) {
-		cur = intermediate[ i ];
-		if ( cur.tokenType === "special" ) {
-			val = cur.args[ 0 ];
-			if ( val.charAt( 0 ) === "<" ) {
-				partialName = val.substr( 1 );
-				partialClose = "/" + partialName;
-				spliceStart = i;
-			} else if ( partialClose && partialClose === val ) {
-				subIntermediate = intermediate.splice( spliceStart, i - spliceStart + 1 );
-				subIntermediate.shift();
-				subIntermediate.pop();
-				i = spliceStart - 1;
-				partialClose = null;
-				inlinePartials[ partialName ] = stache( subIntermediate );
-			}
-		}
-	}
-	return inlinePartials;
-};
-
-var namedPartials = /(\{\{<([^\}]+)\}\})([\s\S]*?)(\{\{\/\2\}\})/gi;
-
 function stache(template){
 	var inlinePartials = {};
 
 	// Remove line breaks according to mustache's specs.
 	if(typeof template === "string") {
-		namedPartials.lastIndex = 0;
-		template = mustacheCore.cleanLineEndings( template ).replace(
-			namedPartials,
-			function ( whole, startTag, partialName, partialTemplate, endTag ) {
-				inlinePartials[ partialName ] = stache( partialTemplate );
-				return "";
-			});
-	} else {
-		inlinePartials = intermediateNamedPartials( template );
+		template = mustacheCore.cleanLineEndings( template );
 	}
 
 	// The HTML section that is the root section for the entire template.
@@ -109,8 +75,13 @@ function stache(template){
 				section.add(mustacheCore.makeLiveBindingPartialRenderer(stache, copyState()));
 
 			} else if(mode === "/") {
-
-				section.endSection();
+				var createdSection = section.last();
+				if ( createdSection.startedWith === "<" ) {
+					inlinePartials[ stache ] = section.endSubSectionAndReturnRenderer();
+					section.removeCurrentNode();
+				} else {
+					section.endSection();
+				}
 				if(section instanceof HTMLSectionBuilder) {
 
 					//!steal-remove-start
@@ -140,17 +111,16 @@ function stache(template){
 					mustacheCore.makeLiveBindingBranchRenderer:
 					mustacheCore.makeStringBranchRenderer;
 
-
 				if(mode === "{" || mode === "&") {
 
 					// Adds a renderer function that just reads a value or calls a helper.
 					section.add( makeRenderer(null,stache, copyState() ));
 
-				} else if(mode === "#" || mode === "^") {
+				} else if(mode === "#" || mode === "^" || mode === "<") {
 					// Adds a renderer function and starts a section.
-					var renderer = makeRenderer(mode,stache, copyState()  );
+					var renderer = makeRenderer(mode, stache, copyState());
 					section.startSection(renderer);
-
+					section.last().startedWith = mode;
 					// If we are a directly nested section, count how many we are within
 					if(section instanceof HTMLSectionBuilder) {
 						//!steal-remove-start
@@ -311,8 +281,6 @@ function stache(template){
 						});
 					});
 				}
-
-
 
 				state.attr = null;
 			}
