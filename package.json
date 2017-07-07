@@ -38,7 +38,7 @@
     "can-namespace": "1.0.0",
     "can-observation": "^3.3.1",
     "can-reflect": "^1.2.1",
-    "can-route": "^3.2.0-pre.0",
+    "can-route": "^3.2.1",
     "can-symbol": "^1.0.0-pre.0",
     "can-util": "^3.9.5",
     "can-view-callbacks": "^3.2.0-pre.0",
